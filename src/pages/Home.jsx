@@ -20,7 +20,7 @@ export default function Home() {
     console.log("Getting route from", start, "to", destination);
 
     // 1. 向 backend 请求 AI 预测（未来你会根据 start/destination 来请求）
-    const prediction = await TrafficService.getPrediction("M50-01", 2);
+    const prediction = await TrafficService.getPrediction(start, destination);
 
     // Prophet 返回格式 { ds, yhat }，这里转换为折线图格式
     const formattedPrediction = prediction.map((p, i) => ({
