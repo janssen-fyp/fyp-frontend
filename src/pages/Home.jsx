@@ -22,13 +22,14 @@ export default function Home() {
     // 1. 向 backend 请求 AI 预测（未来你会根据 start/destination 来请求）
     const prediction = await TrafficService.getPrediction(start, destination);
 
-    // Prophet 返回格式 { ds, yhat }，这里转换为折线图格式
-    const formattedPrediction = prediction.map((p, i) => ({
-      minute: i,
-      value: Math.round(p.yhat),
-    }));
+    // // Prophet 返回格式 { ds, yhat }，这里转换为折线图格式
+    // const formattedPrediction = prediction.map((p, i) => ({
+    //   minute: i,
+    //   value: Math.round(p.yhat),
+    // }));
 
-    setPredictionData(formattedPrediction);
+    // setPredictionData(formattedPrediction);
+    setPredictionData(prediction);
 
     // 2. 示例地图路线 —— 未来将由你的 route service 返回
     const sampleRoutes = [
