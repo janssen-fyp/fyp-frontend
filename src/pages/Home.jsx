@@ -105,6 +105,11 @@ export default function Home() {
   const [startMarker, setStartMarker] = useState(null);
   const [endMarker, setEndMarker] = useState(null);
 
+  const [predictionSummary, setPredictionSummary] = useState(null);
+  const [congestionScenario, setCongestionScenario] = useState(null);
+  const [alternativesCount, setAlternativesCount] = useState(0);
+  const [selectedRouteId, setSelectedRouteId] = useState(null);
+
   const handleGetRoute = async (start, destination, congestionMode) => {
   console.log("Getting route from", start, "to", destination, "mode:", congestionMode);
 
@@ -121,7 +126,25 @@ export default function Home() {
       congestionMode
     );
     setResolvedMode(routeResult.effectiveCongestionMode);
+
     console.log("Route Result:", routeResult);
+    console.log("Prediction inference:", routeResult.predictionInference);
+    
+    setAlternativesCount(routeResult.alternativesCount ?? 0);
+    setSelectedRouteId(routeResult.selectedRouteId ?? null);
+
+    if (routeResult.predictionInference?.predictionSummary) {
+      setPredictionSummary(routeResult.predictionInference.predictionSummary);
+    } else {
+      setPredictionSummary(null);
+    }
+
+    if (routeResult.predictionInference?.inference) {
+      setCongestionScenario(routeResult.predictionInference.inference);
+    } else {
+      setCongestionScenario(null);
+    }
+
     if (routeResult.startCoord) {
       setStartMarker([routeResult.startCoord.lat, routeResult.startCoord.lon]);
     } else {
@@ -174,6 +197,10 @@ export default function Home() {
     setAlternativeRoutes([]);
     setStartMarker(null);
     setEndMarker(null);
+    setPredictionSummary(null);
+    setCongestionScenario(null);
+    setAlternativesCount(0);
+    setSelectedRouteId(null);
   } finally {
     setLoadingRoute(false);
   }
@@ -215,9 +242,56 @@ export default function Home() {
           </div>
         )}
 
-        {resolvedMode && (
-          <div className="absolute top-28 left-4 bg-white px-4 py-2 rounded-lg shadow text-sm z-[1000]">
-            AI Decision: <strong>{resolvedMode}</strong>
+        {(resolvedMode || predictionSummary || congestionScenario) && (
+          <div className="absolute top-28 left-4 bg-white px-4 py-3 rounded-lg shadow text-sm z-[1000] space-y-1 min-w-[260px]">
+            <div>
+              AI Selected:{" "}
+              <strong
+                className={
+                  resolvedMode === "upper"
+                    ? "text-red-500"
+                    : resolvedMode === "lower"
+                    ? "text-orange-500"
+                    : "text-blue-600"
+                }
+              >
+                {resolvedMode === "upper"
+                  ? "Upper Congestion Route"
+                  : resolvedMode === "lower"
+                  ? "Lower Congestion Route"
+                  : "Normal Route"}
+              </strong>
+            </div>
+
+            {predictionSummary && (
+              <div className="text-gray-700">
+                Predicted Traffic:{" "}
+                <strong>{Math.round(predictionSummary.averageYhat)}</strong>
+              </div>
+            )}
+
+            {congestionScenario && (
+              <>
+                <div className="text-gray-700">
+                  Threshold: <strong>{congestionScenario.threshold}</strong>
+                </div>
+                <div className="text-gray-700">
+                  Congestion Scenario:{" "}
+                  <strong className="capitalize">{congestionScenario.scenario}</strong>
+                </div>
+              </>
+            )}
+
+            <div className="text-gray-700">
+              Alternatives Count: <strong>{alternativesCount}</strong>
+            </div>
+
+            <div className="text-gray-700">
+              Selected Route:{" "}
+              <strong>
+                {selectedRouteId !== null ? `Route ${selectedRouteId}` : "N/A"}
+              </strong>
+            </div>
           </div>
         )}
       </div>
