@@ -91,6 +91,8 @@ import CongestionToggle from "../components/CongestionToggle";
 import { TrafficService } from "../services/traffic-service";
 import { RouteService } from "../services/route-service";
 
+import {HistoryService} from "../services/history-service"
+
 export default function Home() {
   const [routes, setRoutes] = useState([]);
   const [predictionData, setPredictionData] = useState([]);
@@ -109,6 +111,8 @@ export default function Home() {
   const [congestionScenario, setCongestionScenario] = useState(null);
   const [alternativesCount, setAlternativesCount] = useState(0);
   const [selectedRouteId, setSelectedRouteId] = useState(null);
+
+  const [historyItems, setHistoryItems] = useState([]);
 
   const handleGetRoute = async (start, destination, congestionMode) => {
   console.log("Getting route from", start, "to", destination, "mode:", congestionMode);
@@ -129,7 +133,10 @@ export default function Home() {
 
     console.log("Route Result:", routeResult);
     console.log("Prediction inference:", routeResult.predictionInference);
-    
+
+    const historyResult = await HistoryService.getHistory();
+    setHistoryItems(historyResult.items || []);
+
     setAlternativesCount(routeResult.alternativesCount ?? 0);
     setSelectedRouteId(routeResult.selectedRouteId ?? null);
 
@@ -291,6 +298,30 @@ export default function Home() {
               <strong>
                 {selectedRouteId !== null ? `Route ${selectedRouteId}` : "N/A"}
               </strong>
+            </div>
+          </div>
+        )}
+
+        {historyItems.length > 0 && (
+          <div className="absolute bottom-4 left-4 bg-white px-4 py-3 rounded-lg shadow text-sm z-[1000] max-w-[320px]">
+            <div className="font-semibold mb-2">Recent Route Decisions</div>
+
+            <div className="space-y-1 max-h-40 overflow-y-auto">
+              {historyItems.slice(0, 5).map((item) => (
+                <div
+                  key={item.id}
+                  className="text-xs text-gray-700 border-b pb-1"
+                >
+                  <div>
+                    {item.start_location} → {item.destination}
+                  </div>
+
+                  <div>
+                    {item.effective_mode} | traffic{" "}
+                    {Math.round(item.predicted_traffic || 0)}
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         )}
