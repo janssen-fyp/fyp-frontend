@@ -1,4 +1,26 @@
-import { MapContainer, TileLayer, Polyline, ZoomControl, Marker, Popup } from "react-leaflet";
+import { useEffect } from "react";
+import {
+  MapContainer,
+  TileLayer,
+  Polyline,
+  ZoomControl,
+  Marker,
+  Popup,
+  useMap,
+  CircleMarker
+} from "react-leaflet";
+
+function RecenterMap({ center }) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (center && Array.isArray(center) && center.length === 2) {
+      map.setView(center);
+    }
+  }, [center, map]);
+
+  return null;
+}
 
 export default function TrafficMap({
   routes = [],
@@ -8,14 +30,17 @@ export default function TrafficMap({
   resolvedMode = "normal",
   startMarker = null,
   endMarker = null,
+  center = null,
 }) {
-  const defaultCenter = [53.3498, -6.2603]; // Dublin
+  const fallbackCenter = [53.3498, -6.2603]; // Dublin
 
   const getSelectedRouteColor = () => {
+    // 默认：推荐路线显示蓝色
     if (!showCongestion) {
       return "#2563eb"; // blue
     }
 
+    // 打开拥堵覆盖层后：按 AI 决策语义显示
     switch (resolvedMode) {
       case "upper":
         return "#ef4444"; // red
@@ -27,24 +52,34 @@ export default function TrafficMap({
   };
 
   const getAlternativeRouteColor = () => {
-    return "#6b7280";
+    return "#6b7280"; // deeper grey
   };
 
-  const center =
+  // 地图实际中心优先级：
+  // 外部传入 current location center
+  // -> 起点 marker
+  // -> 主路线第一个点
+  // -> 候选路线第一个点
+  // -> 旧 routes 第一个点
+  // -> Dublin fallback
+  const mapCenter =
+    center ||
+    startMarker ||
     selectedRoute?.[0]?.coordinates?.[0] ||
     alternativeRoutes?.[0]?.coordinates?.[0] ||
     routes?.[0]?.coordinates?.[0] ||
-    startMarker ||
-    defaultCenter;
+    fallbackCenter;
 
   return (
     <div className="relative w-full h-full z-0">
       <MapContainer
-        center={center}
+        center={mapCenter}
         zoom={13}
         zoomControl={false}
         className="w-full h-full"
       >
+        <RecenterMap center={mapCenter} />
+
         <TileLayer
           attribution="&copy; OpenStreetMap contributors"
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -94,6 +129,21 @@ export default function TrafficMap({
           <Marker position={endMarker}>
             <Popup>Destination</Popup>
           </Marker>
+        )}
+
+        {/* 当前用户位置（蓝点） */}
+        {center && (
+          <CircleMarker
+            center={center}
+            radius={8}
+            pathOptions={{
+              color: "#2563eb",      // 边框蓝
+              fillColor: "#3b82f6",  // 填充蓝
+              fillOpacity: 1,
+            }}
+          >
+            <Popup>Your Location</Popup>
+          </CircleMarker>
         )}
 
         {/* 兼容旧 routes */}

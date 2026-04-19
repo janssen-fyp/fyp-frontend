@@ -93,6 +93,8 @@ import { RouteService } from "../services/route-service";
 
 import {HistoryService} from "../services/history-service"
 
+import { useEffect } from "react";
+
 export default function Home() {
   const [routes, setRoutes] = useState([]);
   const [predictionData, setPredictionData] = useState([]);
@@ -114,7 +116,34 @@ export default function Home() {
 
   const [historyItems, setHistoryItems] = useState([]);
 
-  const handleGetRoute = async (start, destination, congestionMode) => {
+  const [mapCenter, setMapCenter] = useState([53.3498, -6.2603]);
+
+  useEffect(() => {
+  if (!navigator.geolocation) return;
+
+  navigator.geolocation.getCurrentPosition(
+    (position) => {
+      const coords = [
+        position.coords.latitude,
+        position.coords.longitude,
+      ];
+
+      console.log("Current location:", coords);
+
+      setMapCenter(coords);
+    },
+    (error) => {
+      console.warn("Geolocation failed:", error.message);
+    }
+  );
+}, []);
+
+  const handleGetRoute = async (
+  start,
+  destination,
+  congestionMode = "normal",
+  startCoords = null
+) => {
   console.log("Getting route from", start, "to", destination, "mode:", congestionMode);
 
   setRouteError("");
@@ -127,7 +156,8 @@ export default function Home() {
     const routeResult = await RouteService.getRoute(
       start,
       destination,
-      congestionMode
+      congestionMode,
+      startCoords
     );
     setResolvedMode(routeResult.effectiveCongestionMode);
 
@@ -230,6 +260,7 @@ export default function Home() {
           resolvedMode={resolvedMode}
           startMarker={startMarker}
           endMarker={endMarker}
+          center={mapCenter}
         />
 
         <CongestionToggle

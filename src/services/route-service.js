@@ -1,5 +1,5 @@
 export const RouteService = {
-  async getRoute(start, destination, congestionMode = "normal") {
+  async getRoute(start, destination, congestionMode = "normal", startCoords = null) {
     const response = await fetch("http://127.0.0.1:5001/api/route", {
       method: "POST",
       headers: {
@@ -8,7 +8,8 @@ export const RouteService = {
       body: JSON.stringify({
         start,
         destination,
-        congestionMode,   // 🔥 只加这一行
+        congestionMode,
+        startCoords,
       }),
     });
 
